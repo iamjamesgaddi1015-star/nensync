@@ -12,6 +12,8 @@ Revision 1.2 adds owner-requested night mode with Light / Dark / System preferen
 
 ## 1. Approved understanding
 
+Operational addendum: [section 15](#15-supabase-and-vercel-setup-record-and-resolved-auth-issues) records the database/auth/Vercel setup, final Gmail SMTP configuration and owner-confirmed signup resolution. Earlier planning-only or unconfigured-service statements describe the original delivery baseline; this addendum records the later owner-operated setup without changing the approved private-account scope.
+
 Approved feature amendment: [ALARM-PLAN.md](ALARM-PLAN.md) adds the requested completion chime and generic desktop notification while NenSync remains open. Understanding and scoped implementation approval are confirmed. This is the explicit exception to the original notification exclusion; other scope/security boundaries remain in force. Actual NS-14 evidence belongs in VERIFICATION.md.
 
 | Decision               | Agreed behavior                                                                                                                                  |
@@ -141,7 +143,7 @@ Propose `(user_id, work_date)` on standups, `(user_id, active_slot)` uniqueness 
 - Store only unsaved standup text locally, keyed by account and work date, with version/time metadata. Proposed expiry is seven days. Clear acknowledged draft buffers and all account buffers on logout/account deletion; never show another account's buffers. Explain local-device storage. Storage denial/quota errors downgrade to a visible unsaved warning and copy option.
 - On account switching or auth expiry, cancel writes, unsubscribe, clear private memory and separate draft recovery by authenticated identity. Never replay a former user's pending mutation as the new user.
 - Realtime announces owner-scoped persisted changes for refetch; it is not a second state authority or an event-delivery guarantee. Subscribe only to required tables, clean up on logout, resubscribe on reconnect and refetch canonical state on visibility changes. Recompute the summary after relevant writes.
-- Proposed request timeout is 10 seconds. Retry transient reads/completion reconciliation at most twice with backoff/jitter; writes require an idempotent identity or explicit retry. Ambiguous task responses refetch by ID/version before retry. Never restart an interval because its completion response timed out.
+- Current request timeout is 30 seconds for email-auth endpoints `/auth/v1/signup`, `/auth/v1/recover` and `/auth/v1/resend`; other Supabase requests retain 10 seconds. This replaces the initial blanket ten-second proposal after the signup timeout investigation in section 15. Retry transient reads/completion reconciliation at most twice with backoff/jitter; writes require an idempotent identity or explicit retry. Ambiguous task responses refetch by ID/version before retry. Never restart an interval because its completion response timed out, or assume a canceled signup means no account was created.
 - A disconnected countdown is advisory; offline pause/start/resume and task edits explain that a connection is required. Unsaved standup text can still compile, but is marked locally protected rather than server-saved. EOD excludes unconfirmed work.
 - Timer UI updates once per second without database heartbeats. Screen readers hear start/pause/completion status, not every tick. Auth expiry preserves eligible local drafts while requiring sign-in before database access resumes.
 
@@ -277,3 +279,125 @@ The owner's approval authorizes bounded local implementation and the approved de
 - [Owned backlog and verification status](TASKS.md)
 
 Public sources checked 2026-11-04: official Supabase documentation linked above; Next.js maintainer advisories; OWASP ASVS. Reviewed the official [Next.js user-management example](https://github.com/supabase/supabase/tree/master/examples/user-management/nextjs-user-management) for integration shape, not as a UI template or source of public-profile policy. Its upstream [repository license](https://github.com/supabase/supabase/blob/master/LICENSE) is Apache-2.0; copied files, if any, need applicable notices and per-file/dependency review. No source was copied or installed. Package-level licenses and current lockfile vulnerabilities remain P1/P7 checks; public example review is not an app audit.
+
+## 15. Supabase and Vercel setup record and resolved auth issues
+
+Recorded 2026-11-04. Deployed application: **https://nensync.vercel.app**. After the Gmail SMTP corrections below, the owner confirmed, "Now, it is working." This is the reported resolution of the signup/email incident. Setup was performed by the owner with guidance; the agent did not inspect actual credentials, mutate hosted configuration, deploy source or independently audit the live database. Password recovery, account deletion, two-user isolation/Realtime and production readiness are separate checks, not established by that signup confirmation.
+
+### 15.1 Database initialization
+
+1. Create/select the dedicated Supabase project and wait for provisioning. Retain its database password privately for administrative database access; it is not the SMTP password or the browser API key.
+2. Before creating application accounts, open **Supabase -> SQL Editor -> New query** and run the complete reviewed [initial migration](supabase/migrations/202611040001_workspace.sql). It is an initial installation, not a repeatable reset: preflight existing objects before applying it to a nonempty project; do not recreate tables manually from the earlier four-table brief.
+3. The migration defines these six public tables:
+
+   | Table | Purpose |
+   | --- | --- |
+   | `profiles` | Account name, timezone, onboarding and ownership |
+   | `standups` | One versioned standup per user/work date |
+   | `tasks` | Current tasks and three active positions |
+   | `task_completions` | Historical completion snapshots for EOD reporting |
+   | `timer_states` | One durable shared timer per account |
+   | `focus_sessions` | Completed focus/break facts and interval identity |
+
+4. The same script enables RLS on every table, adds owner-read policies and restricted transactional RPCs, and creates the `nensync_profile` trigger on Supabase-managed `auth.users`. New auth users automatically receive a profile and timer state. The trigger does not retroactively backfill preexisting accounts.
+5. Where the `supabase_realtime` publication exists, the migration adds `profiles`, `standups`, `tasks` and `timer_states`. Keep RLS and restricted grants enabled; client filtering is not the ownership boundary. Hosted object inspection and concurrent-user validation remain distinct from the local migration tests.
+
+### 15.2 Keys and the Vercel connection
+
+In Supabase's **Connect** dialog or **Settings -> API Keys**, obtain the project URL and publishable key. Both must belong to the same project containing NenSync's migration. In **Vercel -> NenSync -> Settings -> Environment Variables**, use these exact names for **Production**:
+
+| Variable | Value/purpose | Exposure and requirement |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Project URL copied from Supabase | Public configuration; required for account access |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key from the same project | Browser-safe application key; required; the code does not read `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
+| `NENSYNC_RECOVERY_SECRET` | Owner-generated cryptographically random secret of at least 32 characters | Server-only; required for NenSync's signed password-recovery context, not basic signup/sign-in |
+| `SUPABASE_SERVICE_ROLE_KEY` | Privileged Supabase service-role key | Optional, server-only; needed only to enable the guarded account-deletion endpoint |
+
+No actual values are stored in this record. Never place recovery/service-role/SMTP credentials in a `NEXT_PUBLIC_*` variable. The normal application uses the official Supabase clients and RPCs; it does not need a database password or `DATABASE_URL` environment variable. See the blank [environment template](.env.example).
+
+After saving Vercel variables, create a **new production deployment** so browser configuration is rebuilt. When deploying a source fix, publish the changed source first; redeploying an old commit cannot include a local-only patch. Rebuild/restart local development separately if configuring it. Preview/development environments need their own deliberate configuration; production values are not assumed to apply automatically.
+
+When the required URL/key configuration is missing or the URL format is invalid, `/` deliberately falls back to `/demo` and account forms remain disabled. With valid configuration, unauthenticated visitors go to sign-in. `/demo` always remains the synthetic browser-only preview, with sample Alex and sample tasks; it does not become a real account workspace after configuration. Use the root, `/sign-up` or `/sign-in` for real accounts.
+
+References: [Supabase keys](https://supabase.com/docs/guides/getting-started/api-keys), [Vercel environment variables and deployment behavior](https://vercel.com/docs/environment-variables).
+
+### 15.3 Authentication, URLs and email templates
+
+In **Supabase -> Authentication -> Sign In / Providers -> Email**, enable email/password login and new-user signup, and keep email confirmation enabled. NenSync's form accepts passwords of at least 12 characters; set the intended minimum in Supabase consistently, or require a password meeting a stricter configured policy. The observed 43-character setting was a provider policy, not a hardcoded NenSync limit; its final saved value was not independently inspected.
+
+In **Authentication -> URL Configuration**:
+
+| Setting | Value |
+| --- | --- |
+| Site URL | `https://nensync.vercel.app` |
+| Allowed redirect | `https://nensync.vercel.app/auth/callback` |
+| Allowed redirect | `https://nensync.vercel.app/auth/confirm` |
+
+The callback handles the supported auth-code exchange. The confirmation route verifies email tokens. In **Authentication -> Email -> Templates**, the configured link patterns for this app are:
+
+Confirm signup:
+
+```html
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email">Confirm your email</a>
+```
+
+Reset password:
+
+```html
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=recovery">Reset your password</a>
+```
+
+Only successful recovery-type OTP verification issues NenSync's signed recovery context. A regular signed-in session or editable callback parameter cannot authorize password replacement. Recovery requires `NENSYNC_RECOVERY_SECRET`; the signup success report is not evidence that reset expiry/replay/provider controls were tested.
+
+References: [Supabase Auth configuration](https://supabase.com/docs/guides/auth/general-configuration), [redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls), [SSR confirmation flow](https://supabase.com/docs/guides/getting-started/tutorials/with-nextjs).
+
+### 15.4 Working email provider: Gmail SMTP
+
+Resend was discussed as an example but was **not** the provider used. The owner used Gmail. Custom SMTP is needed to deliver Supabase verification messages to ordinary application users rather than only the restricted recipients of Supabase's default mail service.
+
+The final setup instructions that preceded the owner's success confirmation were:
+
+1. Sign into the Google account that will send NenSync emails and enable **2-Step Verification**.
+2. Open [Google App Passwords](https://myaccount.google.com/apppasswords), create an app password named **NenSync Supabase**, and retain it privately.
+3. In **Supabase -> Authentication -> Email -> SMTP Settings**, enable custom SMTP and save:
+
+   | SMTP field | Configuration |
+   | --- | --- |
+   | Host | `smtp.gmail.com` |
+   | Port | `587` (TLS/STARTTLS); `465` is Google's supported SSL alternative |
+   | Username | The full Gmail address for the sending account |
+   | Password | The generated 16-character Google app password, not the regular Gmail password |
+   | Sender email | The same Gmail address used as SMTP username |
+   | Sender name | `NenSync` |
+
+4. Paste the app password without its display spaces. Make sure it was generated while signed into the same Google account as the SMTP username. No email address or password value is recorded here.
+5. Save the SMTP settings, then perform a controlled signup/email verification check. SMTP settings live in Supabase; changing them alone does **not** require a Vercel redeployment. No Gmail SMTP password belongs in Vercel or NenSync's browser code.
+
+Google can revoke app passwords when the Google account password changes. If that happens, generate a replacement and update Supabase's SMTP password. Account/organization policies can restrict app-password availability. Provider sending limits still apply; a working individual signup does not establish bulk email capacity.
+
+References: [Supabase Gmail SMTP configuration](https://supabase.com/kb/troubleshooting/using-google-smtp-with-supabase-custom-smtp-ZZzU4Y), [Google app passwords](https://support.google.com/accounts/answer/185833), [Supabase default SMTP restrictions](https://supabase.com/docs/guides/auth/auth-smtp).
+
+### 15.5 Auth issues, diagnosis and solutions
+
+| Symptom/evidence | Cause or interpretation | Correction and observed outcome |
+| --- | --- | --- |
+| `/demo`, sample Alex and unavailable account actions | The application was operating as the unconnected synthetic preview | Configure the actual Supabase URL/key and deploy a new build; use the real root/signup/sign-in route. Set the personal name/timezone during onboarding or through Workspace settings. |
+| HTTP 422, `weak_password`, minimum 43 characters | Supabase's configured password policy was stricter than the form's 12-character floor | Align the intended Supabase minimum with the form or provide a compliant longer password. Later attempts advanced to email delivery; the final saved policy value was not read. |
+| Generic signup failure; Network showed canceled after about 10 seconds with an empty response | NenSync's blanket ten-second client timeout could discard a slower response; the generic UI hid useful error categories | Local code now permits 30 seconds for signup/recover/resend only and provides safe corrective messages. A synthetic successful 12-second signup response reproduced failure before the fix and succeeded afterward. This improved the client but did not resolve the underlying SMTP configuration. |
+| After the client fix: Supabase Auth log `POST /signup`, HTTP 504, `context deadline exceeded` | The request reached Supabase and timed out server-side | Inspect Auth logs rather than further increasing client timeouts. The owner then identified Gmail host `smtp.gmail.com` with incorrect port `586`; instructions corrected it to `587`. |
+| `unexpected_failure` / `Error sending confirmation email` | Verification-email sending failed; the API summary did not expose its SMTP cause | Expand the matching Supabase Auth log and inspect its sanitized inner error. That revealed Gmail's `535 5.7.8` authentication rejection. |
+| Gmail SMTP `535 5.7.8 Username and Password not accepted` | Gmail was reachable but rejected the SMTP credential pair | Use a Google app password with 2-Step Verification, for the same account as the full SMTP username/sender, and save it in Supabase. After these instructions, the owner confirmed signup was working. |
+
+The client repair also preserves caller cancellation, including Request inputs and explicit null signal overrides. Signup feedback extracts a bounded numeric password minimum and allowlists useful setup/rate-limit errors. It does not echo arbitrary provider text, secrets, email addresses or account-existence details. See [verification evidence](VERIFICATION.md) and [the reviewed transport](src/lib/supabase/config.ts).
+
+Local repair evidence: **21** passing logic/database/transport cases, production build/TypeScript, lint/format and **3** focused browser regressions; source/security review recorded in `audits/nensync/evidence/signup-review.md`. These are local checks. The owner's later success statement is the live signup outcome; no hosted configuration snapshot, deployed commit or credentials were collected by the agent.
+
+### 15.6 Repeatable signup flow and operational checks
+
+Ordinary users open NenSync, create an account with their own email/password, follow the verification email and set their name/timezone. The operator configures SMTP once; users do not need Supabase access, Gmail app passwords or per-user SMTP configuration. The sender is the configured application mailbox; recipients can use their own email providers, subject to provider policies and limits.
+
+For a future failure, note its time, inspect the failed signup response and matching **Supabase -> Logs -> Auth** entry, and share only sanitized error codes/messages if assistance is needed. Check the recipient inbox/spam folder and whether an account exists before repeating a request whose outcome is unknown. A client cancellation alone cannot prove no account was created. Diagnose provider authentication/delivery, database triggers and Auth hooks from actual error evidence instead of changing all settings together.
+
+Current status: **signup reported working by the owner after Gmail configuration correction**. Password reset, account deletion, hosted two-user RLS/Realtime, concurrency, operational recovery and broader release gates retain their separate verification requirements. Accounts remain private; team membership, shared workloads and teammate accomplishments are deferred features.
+
+Troubleshooting reference: [Supabase Auth/SMTP diagnostics](https://supabase.com/kb/troubleshooting/resolving-500-status-authentication-errors-7bU5U8).
