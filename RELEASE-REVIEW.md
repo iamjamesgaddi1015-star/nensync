@@ -24,6 +24,8 @@ NS-14 source review: /root/alarm_security, report `audits/nensync/evidence/alarm
 
 ## Next external proposal
 
+Latest signup repair is ready for local review, not deployed: verification records 21 passing logic/database/transport cases, full lint/build/type/format and 3 focused browser cases. The prior 26-case browser result remains historical. Email-auth calls now allow 30 seconds and signup feedback is allowlisted; no cloud service or credential change was made. Deploy the exact changed source through the owner's authorized process and verify real signup/email/account state before claiming the live incident resolved. Longer request time is not proof of SMTP health; earlier canceled requests may have completed on the server.
+
 Before connected acceptance, select the actual Supabase/hosting/SMTP environments and region, permitted synthetic operations, cost ceiling and operational owners. Preflight existing objects; review the migration and public-key/secret setup without exposing values to agents. Configure the recovery template described in README and verify account lifecycle/Realtime with two synthetic identities. Define concurrent workload, retry/cost stops and recovery objectives. Bind QA/security evidence to that exact environment before a release recommendation.
 
 No runnable cloud command is invented for an unselected target. No provider connection, paid fallback, external message or production change is authorized here. Incident commander, technical responder and security/privacy contacts must be assigned by the owner before public operation; agents do not send notices automatically.

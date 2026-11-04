@@ -12,6 +12,44 @@ import { safeTheme } from "../src/lib/theme";
 import { signRecovery, verifyRecovery } from "../src/lib/recovery-crypto";
 import { sweepDrafts, draftPrefix } from "../src/lib/draft-storage";
 import { boundedJson } from "../src/lib/bounded-body";
+import { signupErrorMessage } from "../src/lib/auth-errors";
+
+test("signup explains the actual provider password minimum without reflecting its message", () => {
+  const result = signupErrorMessage({
+    code: "weak_password",
+    message:
+      "Password should be at least 43 characters. synthetic-private-marker",
+  });
+  assert.match(result, /at least 43 characters/);
+  assert.doesNotMatch(result, /synthetic-private-marker/);
+});
+
+test("signup exposes corrective configuration feedback without private provider text", () => {
+  const result = signupErrorMessage({
+    code: "email_address_not_authorized",
+    message: "synthetic-owner@example.invalid is not authorized",
+  });
+  assert.match(result, /Contact the workspace owner/);
+  assert.doesNotMatch(result, /synthetic-owner|example.invalid/);
+  assert.match(
+    signupErrorMessage({ code: "over_email_send_rate_limit" }),
+    /Wait before trying again/,
+  );
+});
+
+test("unconfirmed signup preserves unknown outcome and account-existence privacy", () => {
+  assert.match(
+    signupErrorMessage({ name: "AuthRetryableFetchError", status: 0 }),
+    /account may already have been created/,
+  );
+  assert.equal(
+    signupErrorMessage({
+      code: "email_exists",
+      message: "synthetic-existing-account",
+    }),
+    signupErrorMessage({ code: "unknown", message: "synthetic-secret-value" }),
+  );
+});
 
 test("local workdays handle UTC boundaries and daylight-saving transitions", () => {
   assert.equal(

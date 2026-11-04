@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "format": "prettier --write src tests scripts supabase *.json *.mjs",
     "format:check": "prettier --check src tests scripts *.json *.mjs",
-    "test": "tsx --test tests/domain.test.ts tests/database.test.ts",
+    "test": "tsx --test tests/domain.test.ts tests/database.test.ts tests/transport.test.ts",
     "test:e2e": "playwright test",
     "db:types": "tsx scripts/database-types.ts"
   },

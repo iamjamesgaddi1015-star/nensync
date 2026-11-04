@@ -52,6 +52,10 @@ Exports are owner-filtered and paginated, with an explicit size error rather tha
 
 ## Checks and evidence
 
+Signup troubleshooting: a request canceled at about ten seconds can come from the old client deadline, leaving no response body. The current source gives `/auth/v1/signup`, `/auth/v1/recover` and `/auth/v1/resend` 30 seconds; other Supabase calls retain 10 seconds. Deploy a fresh build containing this change before expecting it on Vercel. Cancellation does not establish whether an account was created: check your verification inbox and Supabase Authentication status before retrying. If the request still fails, use the Auth error code and provider logs to distinguish password policy, email setup, rate limits and backend failures. Share only sanitized error codes/messages, never credentials or user records.
+
+The signup form shows allowlisted corrective errors without reflecting arbitrary provider text or exposing account existence. Password-policy feedback can show the provider's numeric minimum even when it exceeds the form's 12-character floor. The minimum is configured in Supabase; SMTP configuration is independent. A longer client deadline does not prove mail delivery or fix a broken provider configuration.
+
 ```text
 npm run format:check
 npm run typecheck

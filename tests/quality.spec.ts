@@ -90,7 +90,7 @@ test("account endpoints reject foreign-origin requests and callbacks keep redire
     const r = await request.get(route, { maxRedirects: 0 });
     expect(r.status()).toBe(307);
     const destination = new URL(r.headers().location, r.url());
-    expect(destination.origin).toBe("http://127.0.0.1:3210");
+    expect(destination.origin).toBe(new URL(r.url()).origin);
     expect(destination.pathname + destination.search).toBe(
       "/sign-in?error=link",
     );

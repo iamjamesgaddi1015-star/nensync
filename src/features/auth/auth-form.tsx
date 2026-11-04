@@ -6,6 +6,7 @@ import { Brand, Button, Notice } from "@/components/primitives";
 import { ThemeControl } from "@/components/theme-control";
 import { browserClient } from "@/lib/supabase/browser";
 import { message } from "@/lib/domain";
+import { signupErrorMessage } from "@/lib/auth-errors";
 
 export type AuthMode =
   | "sign-in"
@@ -89,10 +90,10 @@ export function AuthForm({
           password,
           options: { emailRedirectTo: `${location.origin}/auth/callback` },
         });
-        if (error)
-          throw new Error(
-            "Signup could not be completed. Try again later or sign in if you already have an account.",
-          );
+        if (error) {
+          setError(signupErrorMessage(error));
+          return;
+        }
         setPassword("");
         setSuccess(
           "If this address can be registered, a verification email will arrive. Open its link to finish joining NenSync.",
@@ -129,7 +130,7 @@ export function AuthForm({
         setSuccess("Your password is updated. Sign in with your new password.");
       }
     } catch (e) {
-      setError(message(e));
+      setError(mode === "sign-up" ? signupErrorMessage(e) : message(e));
     } finally {
       setBusy(false);
     }
@@ -216,8 +217,8 @@ export function AuthForm({
               </div>
               {mode !== "sign-in" && (
                 <span className="field-help">
-                  At least 12 characters. Password managers and paste are
-                  welcome.
+                  At least 12 characters; your workspace may require more.
+                  Password managers and paste are welcome.
                 </span>
               )}
             </label>

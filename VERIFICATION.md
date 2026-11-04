@@ -47,11 +47,11 @@ Resumed 2026-11-04 after the credit-limit halt. All commands below run from the 
 | `npm run format:check` | PASS, exit 0; final changed files additionally formatted/checked |
 | `npm run lint` | PASS; full source run after alarm implementation; focused post-race-fix check recorded in the alarm section |
 | `npm run typecheck` | PASS, exit 0; the subsequent corrected production build also passed its TypeScript phase |
-| `npm test` | PASS, exit 0; 14/14, zero skipped; log `evidence/final-test.log` |
+| `npm test` | Latest signup-repair run PASS, exit 0, 21/21 with zero skipped; earlier 14-case baseline log remains `evidence/final-test.log` |
 | `npm run build` | PASS, exit 0; rebuilt after the relative auth-redirect fix |
-| `npm run test:e2e` | PASS, exit 0; latest complete run 26/26 (15 baseline + 11 alarm), zero skipped, 1.8 minutes; machine-readable `evidence/browser-results.json` |
+| Browser checks | Complete pre-repair run 26/26, zero skipped (`evidence/browser-results.json`); latest signup repair focused auth/form/origin run 3/3, exit 0 (`evidence/signup-browser-results.json`). The unchanged 26-case suite was not rerun after the signup repair. |
 | Design Taste `inspect.mjs ... --app --widths 1440,768,390 --json` | PASS, exit 0; zero FAIL findings; latest report `evidence/alarm-taste/report.json` |
-| Source identity and Markdown links | PASS, exit 0; explicit 58-file SHA-256 manifest and valid project Markdown targets; `evidence/source-manifest.json` and `evidence/handoff-check.json` |
+| Source identity and Markdown links | PASS, exit 0; explicit 60-file SHA-256 manifest and valid project Markdown targets; `evidence/source-manifest.json` and `evidence/handoff-check.json` |
 
 Browser regressions initially caught two issues: the invalid-form test used synchronous checkbox checking for an asynchronous task transition, and auth callbacks changed the browser origin from 127.0.0.1 to localhost. The test now waits for the confirmed task count. Callback success/error paths now return fixed allowlisted relative Location headers, preserve the browser origin and set no-store; security independently re-reviewed the helper and both routes. A subsequent test expected an exact Cache-Control value and rejected the stronger existing `private, no-store` policy; the assertion now checks the required directive. Acceptance requirements were retained.
 
@@ -76,3 +76,17 @@ Native Edge smoke on the corrected build exited 0: an actual running AudioContex
 QA inspected six latest desktop/tablet/mobile light/dark captures; the coordinator inspected desktop light and phone dark. New controls fit/wrap without horizontal overflow. The updated Design Taste inspector exited 0; only colour-sprawl WARN remains (18% desktop), attributable to the approved blue focus panel. No UI rule or test assertion was suppressed.
 
 Browser suspension/OS settings may block output, and closed-tab/locked-phone delivery is excluded. Cross-tab suppression is best-effort when storage/locks/channel coordination is unavailable; separate enabled devices can each alert. These limitations are disclosed in README and inline where relevant. They do not alter exactly-once database completion credit. The local preview remains suitable for synthetic use; hosted release gates remain OPEN.
+
+## Signup timeout and corrective feedback repair
+
+The owner reported a live `weak_password` response with a 43-character minimum, then a generic signup failure whose Network request was canceled at about ten seconds with no response body. This is not evidence of a specific SMTP error. Local source used a ten-second deadline for every Supabase fetch and replaced signup errors with generic text.
+
+Red-capable reproduction: `node node_modules/tsx/dist/cli.mjs --test tests/transport.test.ts`, using only a synthetic loopback HTTP server. Before the fix it exited 1: signup canceled at 10031ms despite the fixture returning successfully at 12 seconds; an existing Request's caller abort was also lost. Ordinary workspace timeout passed. No hosted auth, email or credential was used. After the fix the same tests pass: email-auth response succeeds at approximately 12 seconds, ordinary workspace calls still abort at ten seconds and caller cancellation remains effective.
+
+The deadline is now 30 seconds only for `/auth/v1/signup`, `/auth/v1/recover` and `/auth/v1/resend`, with no new retries. Signup feedback allowlists password minimum, invalid address, email authorization, registration availability and rate-limit guidance, while preserving generic responses for account existence/unknown errors. Network uncertainty tells the user to check their inbox before repeating a mutation. Arbitrary provider messages/private markers are not reflected.
+
+Separate reviewer /root/signup_review reviewed the source/test diff. It identified SR-01: an explicit `init.signal = null` failed to clear a Request's old signal. A focused local regression exited 1 before correction; the corrected implementation distinguishes null from undefined, and the final full `npm test` run passes 21/21 (14 prior + 3 error-feedback + 4 transport), zero skipped. Full lint, production rebuild/TypeScript and formatting pass. Source/test hashes and bounded review are in `audits/nensync/evidence/signup-review.md`.
+
+Focused browser command: `node node_modules/@playwright/test/cli.js test --config ../../../audits/nensync/signup-browser.config.ts --grep 'public authentication|invalid task and profile|account endpoints'`, project cwd and workspace TEMP/TMP, corrected production build on isolated localhost port 3211. Initial result 2 pass/1 fail exposed a test-only hardcoded expected port 3210. The expectation now compares the destination origin with the original response request URL while retaining maxRedirects=0, path/error and no-store assertions. Independent review confirmed that the same-origin gate is preserved. Final rerun exit 0, 3/3 in 5.8 seconds. No other application source changed after the verified build. The 3210 port was already occupied and that process was not terminated; the temporary 3211 process was stopped after checks.
+
+No source change has been deployed to Vercel by the agent. Live SMTP delivery, account status and successful real signup remain UNVERIFIED. The timeout fix can allow an eventual provider response through; it does not repair a bad SMTP configuration or establish whether the owner's earlier request created an account. Existing hosted release gaps remain open.
