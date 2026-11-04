@@ -5,6 +5,7 @@ import { Icon } from "@/components/icons";
 import { PRESETS, countdown, remaining, type Snapshot } from "@/lib/domain";
 import type { WorkspaceRepository } from "@/lib/repository";
 import { useCompletionAlarm } from "./use-completion-alarm";
+import { useNotifications } from "@/hooks/use-notifications";
 
 export function FocusEngine({
   snapshot,
@@ -20,6 +21,7 @@ export function FocusEngine({
   online: boolean;
 }) {
   const t = snapshot.timer;
+  const { sendNotification } = useNotifications();
   const [preset, setPreset] = useState(3000);
   const [taskId, setTaskId] = useState("");
   const [now, setNow] = useState(() => Date.now());
@@ -53,6 +55,20 @@ export function FocusEngine({
     if (t.state !== "running" || left > 0 || !online || busy || !t.interval_id)
       return;
     if (completed.current === t.interval_id && retries.current >= 3) return;
+
+    // Fire the system notification immediately when the client timer strikes absolute zero
+    if (completed.current !== t.interval_id) {
+      sendNotification(
+        t.kind === "break" ? "Break Complete — NenSync" : "Interval Complete — NenSync",
+        {
+          body: t.kind === "break"
+            ? "Break over. Ready to check in on your must-win priorities?"
+            : "Focus block completed. Step back and refresh for 5 minutes.",
+          tag: "nensync-timer-alert"
+        }
+      );
+    }
+
     const id = window.setTimeout(
       async () => {
         completed.current = t.interval_id!;
@@ -85,6 +101,7 @@ export function FocusEngine({
     t.kind,
     repo,
     run,
+    sendNotification
   ]);
   const selected = PRESETS.find((p) => p.seconds === duration) ?? PRESETS[0];
   const validTask =

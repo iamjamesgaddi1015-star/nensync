@@ -1,4 +1,5 @@
 "use client";
+import { useNotifications } from "@/hooks/use-notifications";
 import { useEffect, useState, useRef } from "react";
 import { draftPrefix, sweepDrafts } from "@/lib/draft-storage";
 import { useRouter } from "next/navigation";
@@ -7,6 +8,7 @@ import { ThemeControl } from "@/components/theme-control";
 import { resetDemo } from "@/lib/demo-repository";
 import { message, type Snapshot } from "@/lib/domain";
 import type { WorkspaceRepository } from "@/lib/repository";
+
 
 function download(value: unknown, name: string) {
   const url = URL.createObjectURL(
@@ -43,6 +45,7 @@ export function Settings({
 }) {
   const router = useRouter();
   const nameInput = useRef<HTMLInputElement>(null);
+  const { permission, requestPermission, sendNotification, isSupported } = useNotifications();
   const p = snapshot.profile;
   const onboarding = !p.onboarded;
   const [name, setName] = useState(p.full_name);
@@ -220,6 +223,59 @@ export function Settings({
           <div className="settings-row">
             <span>Appearance</span>
             <ThemeControl />
+          </div>
+          {/* Desktop Notifications Layout Row Integration */}
+          <div className="settings-row flex items-center justify-between border-t border-neutral-100 dark:border-neutral-900/60 pt-4 mt-4">
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium">Desktop Alerts</span>
+              <span className="text-xs text-neutral-400 font-normal">
+                Audio and tray slide-outs for focus completion.
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {!isSupported && (
+                <span className="text-xs text-neutral-400 font-medium">Unsupported</span>
+              )}
+
+              {isSupported && permission === "default" && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={requestPermission}
+                  className="text-xs py-1 px-3 h-8 cursor-pointer"
+                >
+                  Enable
+                </Button>
+              )}
+
+              {isSupported && permission === "denied" && (
+                <span className="text-xs text-red-500 dark:text-red-400 font-medium" title="Reset browser permissions to alter.">
+                  Blocked
+                </span>
+              )}
+
+              {isSupported && permission === "granted" && (
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium inline-flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Active
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => {
+                      sendNotification("NenSync Connected", {
+                        body: "Audio chimes and system alert channels are online.",
+                      });
+                    }}
+                    className="text-xs text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 cursor-pointer h-8 px-2"
+                  >
+                    Test
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
           {error && <Notice error>{error}</Notice>}
           <div className="dialog-actions">
