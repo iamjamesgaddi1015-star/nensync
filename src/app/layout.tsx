@@ -3,11 +3,13 @@ import { cookies } from "next/headers";
 import { ThemeProvider } from "@/components/theme-control";
 import { safeTheme } from "@/lib/theme";
 import "./globals.css";
+
 export const metadata: Metadata = {
   title: "NenSync — make space for your best work",
   description:
     "Your daily standup, three priorities and next focus interval. A private workspace for a calmer workday.",
 };
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -17,14 +19,40 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: dark)", color: "#07162b" },
   ],
 };
+
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const theme = safeTheme((await cookies()).get("nensync-theme")?.value);
+
   return (
-    <html lang="en" data-theme={theme}>
+    <html lang="en" data-theme={theme} suppressHydrationWarning>
+      <head>
+        {/* Anti-Flicker Inline Script Block for Client-Side LocalStorage Fallbacks */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var savedTheme = localStorage.getItem('theme');
+                  var systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  var activeTheme = savedTheme || systemTheme;
+                  
+                  if (activeTheme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {
+                  console.error('Theme injection error:', e);
+                }
+              })();
+            `,
+          }}
+        />
+      </head>
       <body>
         <ThemeProvider initial={theme}>
           <a className="skip-link" href="#main">

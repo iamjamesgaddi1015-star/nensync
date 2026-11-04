@@ -69,8 +69,12 @@ export function Workspace({
             <a href="#focus">Focus</a>
             <a href="#sign-off">Sign-off</a>
           </nav>
-          <div className="header-actions">
-            <ThemeControl />
+          <div className="header-actions flex items-center gap-3">            
+            {/* The Integrated Custom Micro-Interaction Button Toggle Wrapper */}
+            <div className="inline-flex items-center justify-center">
+              <ThemeControl />
+            </div>
+
             <Button
               variant="ghost"
               className="icon-button"
@@ -81,6 +85,7 @@ export function Workspace({
             >
               <Icon name="settings" />
             </Button>
+            
             <Button
               variant="ghost"
               className="avatar"

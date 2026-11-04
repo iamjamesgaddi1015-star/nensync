@@ -1119,3 +1119,12 @@ progress::-moz-progress-bar {
     border: 0.0625rem solid ButtonText;
   }
 }
+.theme-picker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.theme-picker button svg {
+  display: block;
+  max-width: none;
+}

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { publicConfig } from "@/lib/supabase/config";
 import { serverClient } from "@/lib/supabase/server";
 import { Workspace } from "@/features/workspace/workspace";
+
 export default async function Home() {
   if (!publicConfig()) redirect("/demo");
   const client = await serverClient();
