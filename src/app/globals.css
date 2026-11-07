@@ -980,6 +980,7 @@ progress::-moz-progress-bar {
   margin-top: 1.5rem;
   font-size: 0.85rem;
   color: var(--muted);
+  align-items: center;
 }
 .auth-links a {
   text-decoration: underline;
