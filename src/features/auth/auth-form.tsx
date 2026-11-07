@@ -136,129 +136,147 @@ export function AuthForm({
     }
   }
   return (
-    <main className="auth-shell" id="main">
-      <div className="auth-top">
-        <Link href="/demo" aria-label="NenSync preview">
-          <Brand />
-        </Link>
-        <ThemeControl />
-      </div>
-      <section className="auth-card">
-        <div className="auth-signature" aria-hidden="true">
-          <span>01</span>
-          <span>02</span>
-          <span>03</span>
-          <div />
+    <main className="auth-shell auth-page" id="main">
+      <section className="auth-card auth-split" aria-labelledby="auth-heading">
+        <div className="auth-intro">
+          <Link
+            href="/demo"
+            aria-label="NenSync preview"
+            className="auth-brand"
+          >
+            <Brand />
+          </Link>
+          <div className="auth-intro-copy">
+            <h1 id="auth-heading">{headings[mode]}</h1>
+            <p className="supporting">
+              Your standup, three priorities and next focus interval.
+            </p>
+          </div>
+          <p className="auth-privacy">
+            Private by default. Your work is yours.
+          </p>
         </div>
-        <h1>{headings[mode]}</h1>
-        <p className="supporting">
-          {mode === "sign-in"
-            ? "Your standup, three priorities and next focus interval."
-            : mode === "sign-up"
-              ? "A private workspace for a calmer, more intentional workday."
-              : mode === "forgot-password"
-                ? "Enter your email and we’ll send a recovery link."
-                : "Choose a strong password you haven’t used elsewhere."}
-        </p>
-        {!enabled && (
-          <Notice>
-            Account services are not connected yet. The interactive preview
-            works on this device.
-          </Notice>
-        )}
-        {notice && <Notice>{notice}</Notice>}
-        <form noValidate onSubmit={(e) => void submit(e)}>
-          {needsEmail && (
-            <label className="field">
-              <span>Email address</span>
-              <input
-                ref={emailRef}
-                type="email"
-                name="email"
-                autoComplete="email"
-                autoCapitalize="none"
-                spellCheck={false}
-                value={email}
-                maxLength={254}
-                onChange={(e) => setEmail(e.target.value)}
-                aria-invalid={!!error}
-                aria-describedby={error ? "auth-error" : undefined}
-                placeholder="you@example.com"
-              />
-            </label>
+        <div className="auth-form-panel">
+          <div className="auth-form-top">
+            <h2>
+              {mode === "sign-in"
+                ? "Sign in to NenSync"
+                : mode === "sign-up"
+                  ? "Create your account"
+                  : mode === "forgot-password"
+                    ? "Reset your password"
+                    : "Update your password"}
+            </h2>
+            <ThemeControl />
+          </div>
+          <p className="supporting">
+            {mode === "sign-in"
+              ? "Welcome back to your workday."
+              : mode === "sign-up"
+                ? "A private workspace for a calmer, more intentional workday."
+                : mode === "forgot-password"
+                  ? "Enter your email and we’ll send a recovery link."
+                  : "Choose a strong password you haven’t used elsewhere."}
+          </p>
+          {!enabled && (
+            <Notice>
+              Account services are not connected yet. The interactive preview
+              works on this device.
+            </Notice>
           )}
-          {needsPassword && (
-            <label className="field">
-              <span>
-                {mode === "update-password" ? "New password" : "Password"}
-              </span>
-              <div className="password-field">
+          {notice && <Notice>{notice}</Notice>}
+          <form noValidate onSubmit={(e) => void submit(e)}>
+            {needsEmail && (
+              <label className="field">
+                <span>Email address</span>
                 <input
-                  ref={passwordRef}
-                  type={show ? "text" : "password"}
-                  name="password"
-                  autoComplete={
-                    mode === "sign-in" ? "current-password" : "new-password"
-                  }
-                  value={password}
-                  maxLength={256}
-                  onChange={(e) => setPassword(e.target.value)}
+                  ref={emailRef}
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  value={email}
+                  maxLength={254}
+                  onChange={(e) => setEmail(e.target.value)}
                   aria-invalid={!!error}
                   aria-describedby={error ? "auth-error" : undefined}
+                  placeholder="you@example.com"
                 />
-                <Button
-                  variant="ghost"
-                  onClick={() => setShow((x) => !x)}
-                  aria-label={show ? "Hide password" : "Show password"}
-                  aria-pressed={show}
-                >
-                  {show ? "Hide" : "Show"}
-                </Button>
-              </div>
-              {mode !== "sign-in" && (
-                <span className="field-help">
-                  At least 12 characters; your workspace may require more.
-                  Password managers and paste are welcome.
+              </label>
+            )}
+            {needsPassword && (
+              <label className="field">
+                <span>
+                  {mode === "update-password" ? "New password" : "Password"}
                 </span>
-              )}
-            </label>
-          )}
-          {error && (
-            <div id="auth-error">
-              <Notice error>{error}</Notice>
-            </div>
-          )}
-          {success && <Notice>{success}</Notice>}
-          <Button
-            type="submit"
-            busy={busy}
-            disabled={!enabled}
-            className="w-full"
-          >
-            {mode === "sign-in"
-              ? "Sign in"
-              : mode === "sign-up"
-                ? "Create account"
-                : mode === "forgot-password"
-                  ? "Send reset link"
-                  : "Update password"}
-          </Button>
-        </form>
-        <div className="auth-links">
-          {mode === "sign-in" ? (
-            <>
-              <Link href="/forgot-password">Forgot password?</Link>
-              <p>
-                New to NenSync? <Link href="/sign-up">Create an account</Link>
-              </p>
-            </>
-          ) : (
-            <Link href="/sign-in">Back to sign in</Link>
-          )}
-          <Link href="/demo">Explore the interactive preview</Link>
+                <div className="password-field">
+                  <input
+                    ref={passwordRef}
+                    type={show ? "text" : "password"}
+                    name="password"
+                    autoComplete={
+                      mode === "sign-in" ? "current-password" : "new-password"
+                    }
+                    value={password}
+                    maxLength={256}
+                    onChange={(e) => setPassword(e.target.value)}
+                    aria-invalid={!!error}
+                    aria-describedby={error ? "auth-error" : undefined}
+                  />
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShow((x) => !x)}
+                    aria-label={show ? "Hide password" : "Show password"}
+                    aria-pressed={show}
+                  >
+                    {show ? "Hide" : "Show"}
+                  </Button>
+                </div>
+                {mode !== "sign-in" && (
+                  <span className="field-help">
+                    At least 12 characters; your workspace may require more.
+                    Password managers and paste are welcome.
+                  </span>
+                )}
+              </label>
+            )}
+            {error && (
+              <div id="auth-error">
+                <Notice error>{error}</Notice>
+              </div>
+            )}
+            {success && <Notice>{success}</Notice>}
+            <Button
+              type="submit"
+              busy={busy}
+              disabled={!enabled}
+              className="w-full"
+            >
+              {mode === "sign-in"
+                ? "Sign in"
+                : mode === "sign-up"
+                  ? "Create account"
+                  : mode === "forgot-password"
+                    ? "Send reset link"
+                    : "Update password"}
+            </Button>
+          </form>
+          <div className="auth-links">
+            {mode === "sign-in" ? (
+              <>
+                <Link href="/forgot-password">Forgot password?</Link>
+                <p>
+                  New to NenSync? <Link href="/sign-up">Create an account</Link>
+                </p>
+              </>
+            ) : (
+              <Link href="/sign-in">Back to sign in</Link>
+            )}
+            <Link href="/demo">Explore the interactive preview</Link>
+          </div>
         </div>
       </section>
-      <p className="auth-privacy">Private by default. Your work is yours.</p>
     </main>
   );
 }

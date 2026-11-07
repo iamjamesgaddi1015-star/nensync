@@ -1,5 +1,15 @@
 # NenSync verification record
 
+## Auth redesign, 2026-11-07
+
+Owner approved the scoped plan before implementation. Custom coder `/root/auth_redesign` implemented the auth component and scoped CSS using Sol medium; separate custom reviewer `/root/auth_review` independently inspected the resulting diff and rendered UI. No auth submission/state/validation prefix change, backend change, dependency installation, real account request or deployment occurred. Reference and final screenshots are under `audits/nensync/evidence`.
+
+Independent [review report](../../../audits/nensync/evidence/auth-redesign-review.md) binds the final source hashes and patch. Its initial 36-case matrix found one tiny-height gutter defect; coder capped vertical gutters and reviewer ran 12 frozen final boundary cases across both routes/themes at 80, 20 and 1px heights. Final document dimensions equal viewport dimensions, window scrollY stays zero, and card-local scrolling remains available. Fully visible controls after focus were verified down to 80px; 20/1px cannot physically fit full-size controls. Narrow/desktop/short landscape, enlarged root font, equivalent 200% viewport, dynamic resize, recovery navigation, password visibility, notice and demo scrolling checks passed. Automated axe scans reported zero violations in both themes. The original matrix contains mixed pre/fix evidence and is not represented as a frozen final full run.
+
+Coder checks: `npm run typecheck`, focused auth TSX ESLint and both changed files' Prettier check exited 0. Full `npm run format:check` failed on 15 unrelated existing files; full `npm run lint` stalled silently and was terminated (incomplete, not passed). Premium Python audit unavailable; no Python installation attempted. Root's scoped `git diff --check` found no whitespace errors. Next dev automatically added its framework-managed AGENTS.md block; preserved as generated runtime guidance.
+
+Production build verification: `npm.cmd run build`, project cwd with workspace TEMP/TMP and both public account configuration values blank, exited 0 after approved process escalation. Compilation, TypeScript and all 12 generated pages completed. The initial sandbox attempt compiled but failed spawning the TypeScript worker with EPERM; it is not counted as a successful build. Browser evidence above used the isolated development server at localhost:3212 with public account configuration blank; that server was stopped after review. Real Auth/SMTP, connected dashboard, mobile keyboard/hardware, actual browser zoom, Safari/Firefox and manual screen-reader checks remain OPEN. This focused UI task does not repeat unrelated domain/database tests or certify public release readiness.
+
 Candidate: local application 0.1.0, 2026-11-04. Source identity is recorded in the final source manifest under `audits/nensync/evidence`. No commit or deployment was created. Working directory for commands: this project. All fixtures and screenshots are synthetic.
 
 ## Baseline execution evidence (before the alarm amendment)

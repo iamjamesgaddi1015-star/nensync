@@ -95,6 +95,8 @@ The local implementation now has browser acceptance and light/dark/mobile screen
 
 ## Revision record
 
+Auth redesign amendment, 2026-11-07: the owner explicitly approved a local sign-in/sign-up redesign using the centered split-card structure and minimal styling at https://school-service-payment.vercel.app/. Reference capture: [card reference](../../../audits/nensync/evidence/auth-reference.png). Use a quiet tinted NenSync brand panel beside a minimal form, collapsing to one column on narrow screens. Retain semantic palette/theme tokens, readable controls, existing authentication and recovery behavior. This auth-only exception to normal document scrolling locks the shell to the dynamic viewport and permits card-local scrolling at short heights or enlarged text. Other application pages retain normal document scrolling. No backend or deployment change is included. Actual checks are recorded separately in VERIFICATION.md.
+
 Revision 1 proposed dark slate/emerald cards and excluded a dashboard. Revision 2 records the owner's explicit dashboard exception, supplied reference, four-color palette and relative-unit requirement. This visual refinement changes no feature, security or backend contract. Overall implementation approval remains separate.
 
 Revision 3 records approval of the revised light mockup and adds matching night mode with Light / Dark / System preference. No app code or cloud changes are authorized by this documentation amendment.

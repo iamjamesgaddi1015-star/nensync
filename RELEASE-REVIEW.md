@@ -1,5 +1,19 @@
 # NenSync local readiness review
 
+## Auth redesign assessment, 2026-11-07
+
+Implementation and bounded independent UI review are complete for the owner-approved local redesign. Final auth source fingerprints and reviewer identity are in [auth redesign review](../../../audits/nensync/evidence/auth-redesign-review.md); current command results and limitations are in VERIFICATION.md. Existing broad release claims below refer to their historical candidates, not a fresh full-suite run for this patch.
+
+| Gate | Current patch evidence | Result / owner |
+| --- | --- | --- |
+| Product/design approval | Explicit scoped plan approval; split-card reference and DESIGN amendment | Complete / owner |
+| Independent UI/code review | Separate reviewer, viewport matrix and final boundary rerun, theme axe scans, preserved submission logic | Complete within reported scope / reviewer |
+| Static/build | Production build including TypeScript passes; changed-file lint/format and typecheck pass; broad formatting failures and stalled lint remain unresolved | Focused checks pass; broad checks incomplete / engineering |
+| Services/migrations/operations | No changes to services, auth contracts, data or dependencies | Not changed by patch; historical hosted gaps remain OPEN |
+| Production approval | No deployment target, cost or mutation authorization in this task | Not approved |
+
+Local visual review is available; full release readiness remains NO-GO while broad checks and existing hosted/operational gaps remain open. No deployment proposal is inferred from this local task. To undo only this redesign, review and reverse the two auth source hunks against the saved final patch, preserving other edits and documentation history; no data rollback is required. Root owns documentation; coder owns implementation; independent reviewer owns bounded review. Recheck after further auth source changes.
+
 Date: 2026-11-04. Artifact: local 0.1.0 candidate. Coordinator/release role: Codex. Independent reviewers: separate QA and security agents named in VERIFICATION.md. No cloud deployment target is selected or authorized.
 
 **Local synthetic preview: GO, including approved NS-14 alarms.** Final production build, TypeScript, 14 domain/database cases and all 26 browser cases pass; full lint/format completed after implementation. Independent QA inspected six light/dark desktop/tablet/mobile captures; security re-reviewed the fixes. **Public release: NO-GO**, because hosted integration and operational evidence are not available. Source identity is in `audits/nensync/evidence/source-manifest.json`; see VERIFICATION.md for bounded evidence and the final focused-check receipt.

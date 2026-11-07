@@ -1,5 +1,11 @@
 # NenSync delivery record
 
+## Auth redesign approval, 2026-11-07
+
+Owner approved the scoped reference-led sign-in/sign-up redesign plan with the explicit response "approved." Scope: centered split card, narrow single-column fallback, viewport-locked auth shell with local card scrolling, existing authentication/recovery/preview behavior and semantic light/dark tokens. This is an existing UI redesign; original startup/council records remain applicable. No new backend/service or deployment authorization. Bounded implementation assigned to `/root/auth_redesign` using the custom coder profile (Sol medium); separate reviewer follows the resulting diff. Actual checks and final review outcome will be recorded in VERIFICATION.md.
+
+Completed locally: coder implemented the two-file auth patch; separate reviewer `/root/auth_review` found and rechecked a tiny-height padding correction, with no unresolved diff findings. Production build/TypeScript, scoped lint/format and responsive/accessibility browser checks pass within the evidence limits in VERIFICATION.md. Full formatting has unrelated failures and broad lint stalled; neither is reported passed. Review and screenshots: `audits/nensync/evidence/auth-redesign-review.md`. No deployment performed; temporary preview stopped. DESIGN.md records the owner-approved auth-only scrolling exception; RELEASE-REVIEW.md distinguishes focused UI completion from overall release readiness.
+
 ## Current delivery status (resumed 2026-11-04)
 
 CURRENT OUTCOME: after the Gmail port/app-password corrections, the owner explicitly confirmed, "Now, it is working." The signup/email incident is resolved by owner report; the agent did not independently inspect live credentials/configuration or certify all hosted features. PLAN.md section 15 now records the database migration, exact Vercel variable names, URLs/templates, final Gmail setup, error sequence and corrections. Historical OPEN/pending-retest entries below are superseded by this confirmation. Password reset, account deletion, multi-user isolation/Realtime and broader operations remain separate checks.
